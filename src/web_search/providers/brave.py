@@ -13,7 +13,7 @@ from web_search.types import SearchResult
 
 def get_search_results(
     query: str, max_results: int = 20, api_key: Optional[str] = None
-) -> List[Dict[str, Any]]:
+) -> List[SearchResult]:
     token = api_key or BRAVE_SEARCH_API_KEY
     if not token:
         logger.error(
@@ -29,7 +29,8 @@ def get_search_results(
             response = client.get(BRAVE_SEARCH_API_URL, params=params, headers=headers)
             response.raise_for_status()
             data = response.json()
-            return data.get("web", {}).get("results", [])
+            raw_results = data.get("web", {}).get("results", [])
+            return format_search_results(raw_results)
     except (httpx.RequestError, httpx.HTTPStatusError) as e:
         logger.error(f"Brave API request failed for query '{query}': {e}")
     except ValueError as e:
@@ -39,7 +40,7 @@ def get_search_results(
 
 async def get_search_results_async(
     query: str, max_results: int = 20, api_key: Optional[str] = None
-) -> List[Dict[str, Any]]:
+) -> List[SearchResult]:
     token = api_key or BRAVE_SEARCH_API_KEY
     if not token:
         logger.error(
@@ -57,7 +58,8 @@ async def get_search_results_async(
             )
             response.raise_for_status()
             data = response.json()
-            return data.get("web", {}).get("results", [])
+            raw_results = data.get("web", {}).get("results", [])
+            return format_search_results(raw_results)
     except (httpx.RequestError, httpx.HTTPStatusError) as e:
         logger.error(f"Brave API request failed for query '{query}': {e}")
     except ValueError as e:
@@ -65,27 +67,21 @@ async def get_search_results_async(
     return []
 
 
-def format_search_result(raw_result: Dict[str, Any]) -> SearchResult:
-    title = raw_result.get("title", "")
-    url = raw_result.get("url", "")
-    description = raw_result.get("description", "")
-    extra_snippets = " ".join(raw_result.get("extra_snippets", []))
-    return {
-        "title": title,
-        "href": url,
-        "snippet": f"{description} {extra_snippets}".strip(),
-    }
+def format_search_results(raw_results: List[Dict[str, Any]]) -> List[SearchResult]:
+    formatted_results = []
+    for raw_result in raw_results:
+        title = raw_result.get("title", "")
+        url = raw_result.get("url", "")
+        description = raw_result.get("description", "")
+        extra_snippets = " ".join(raw_result.get("extra_snippets", []))
+        snippet = f"{description} {extra_snippets}".strip()
 
+        formatted_results.append(
+            {
+                "title": title,
+                "href": url,
+                "snippet": snippet,
+            }
+        )
 
-def get_search_results_as_markdown(
-    query: str, max_results: int = 20, api_key: Optional[str] = None
-) -> str:
-    search_results = get_search_results(
-        query=query, max_results=max_results, api_key=api_key
-    )
-    if not search_results:
-        return "No search results found."
-    formatted = [
-        f"### [{r['title']}]({r['href']})\n{r['snippet']}" for r in search_results
-    ]
-    return "\n\n".join(formatted)
+    return formatted_results
