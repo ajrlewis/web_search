@@ -74,12 +74,12 @@ def format_search_results(raw_results: List[Dict[str, Any]]) -> List[SearchResul
         url = raw_result.get("url", "")
         description = raw_result.get("description", "")
         extra_snippets = " ".join(raw_result.get("extra_snippets", []))
-        snippet = f"{description} {extra_snippets}".strip()
+        snippet = f"{description}\n{extra_snippets}".strip()
 
         formatted_results.append(
             {
                 "title": title,
-                "href": url,
+                "url": url,
                 "snippet": snippet,
             }
         )

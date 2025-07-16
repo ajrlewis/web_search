@@ -15,5 +15,5 @@ async def test_get_search_results_async():
         assert len(results) == 5
         formatted = brave.format_search_result(results[0])
         assert "title" in formatted
-        assert "href" in formatted
+        assert "url" in formatted
         assert "snippet" in formatted

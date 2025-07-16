@@ -4,5 +4,5 @@ from typing import TypedDict
 
 class SearchResult(TypedDict):
     title: str
-    href: str
+    url: str
     snippet: str
